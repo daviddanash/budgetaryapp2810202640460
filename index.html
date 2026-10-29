@@ -1,0 +1,1060 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Grocery & Budget Tracker</title>
+<style>
+:root{
+  --bg:#f2ebd9;            /* Light discoloured antique cream background */
+  --card:#e8dec8;          /* Warm beige card background */
+  --ink:#263c38;           /* Deep dark teal-charcoal text */
+  --sub:#5d7a6b;           /* Muted teal-green text */
+  --accent:#7FAC8D;        /* Lighter sage green for underspend / normal */
+  --tab-active:#d96b43;    /* Retro orange-red ONLY for active tab button */
+  --accent-light:#f5e6d3;  /* Soft cream highlight */
+  --line:#263c38;          /* Deep teal-charcoal sharp borders */
+  --danger:#264E36;        /* Rich dark green for overspend */
+  --warn:#d9a036;          /* Muted yellow mustard */
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+  box-sizing:border-box;
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#f2ebd9; --card:#e8dec8; --ink:#263c38; --sub:#5d7a6b;
+    --accent:#7FAC8D; --tab-active:#d96b43; --accent-light:#f5e6d3;
+    --line:#263c38; --danger:#264E36; --warn:#d9a036;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#f2ebd9; --card:#e8dec8; --ink:#263c38; --sub:#5d7a6b;
+  --accent:#7FAC8D; --tab-active:#d96b43; --accent-light:#f5e6d3;
+  --line:#263c38; --danger:#264E36; --warn:#d9a036;
+}
+
+*{box-sizing:border-box;}
+html,body{margin:0; height:100%;}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  padding:16px; max-width:640px; margin:0 auto; line-height:1.4; padding-bottom:80px;
+}
+h1{font-size:1.2rem; margin:4px 0 2px; font-weight:700;}
+.sub{color:var(--sub); font-size:0.8rem; margin-bottom:14px;}
+.card{background:var(--card); border:2px solid var(--line); border-radius:14px; padding:16px; margin-bottom:14px; box-shadow: 3px 3px 0px var(--line);}
+.card h2{font-size:0.85rem; margin:0 0 10px; color:var(--sub); text-transform:uppercase; letter-spacing:.04em; font-weight:700;}
+.hero{border:2px solid var(--accent); background:var(--accent-light);}
+.row{display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap; align-items:flex-end;}
+.field{display:flex; flex-direction:column; flex:1; min-width:110px; gap:4px;}
+.flabel{font-size:0.72rem; color:var(--sub); font-weight:600;}
+input,select{
+  background:var(--bg); border:2px solid var(--line); color:var(--ink);
+  border-radius:8px; padding:9px 10px; font-size:0.95rem; width:100%; font-weight:500;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+button{
+  background:var(--accent); color:#fff; border:2px solid var(--line); border-radius:8px;
+  padding:9px 14px; font-size:0.9rem; cursor:pointer; white-space:nowrap; font-weight:600;
+  box-shadow: 2px 2px 0px var(--line); height: 41px;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+button:active { transform: translate(1px, 1px); box-shadow: 1px 1px 0px var(--line); }
+button.secondary{background:transparent; color:var(--ink); border:2px solid var(--line);}
+button.ghost{background:transparent; color:var(--sub); border:2px solid var(--line); font-size:0.8rem; padding:6px 10px; height: 35px;}
+button.danger{background:transparent; color:var(--danger); border:2px solid var(--danger); padding:4px 8px; font-size:0.78rem; height: 35px;}
+button.link{background:none; border:none; color:var(--accent); padding:4px 0; font-size:0.8rem; text-decoration:underline; height:auto; box-shadow:none;}
+
+/* Row items aligned strictly to the bottom baseline */
+.item{display:flex; justify-content:space-between; align-items:flex-end; padding:8px 0; border-bottom:1px solid var(--line); gap:8px;}
+.item:last-child{border-bottom:none;}
+.item .meta{font-size:0.78rem; color:var(--sub);}
+.grid2{display:grid; grid-template-columns:1fr 1fr; gap:10px;}
+.stat{background:var(--bg); border:2px solid var(--line); border-radius:10px; padding:10px 12px;}
+.stat.hero-stat{grid-column:1/-1; background:var(--card); border:2px solid var(--line);}
+.stat .label{font-size:0.72rem; color:var(--sub); font-weight:600;}
+.stat .val{font-size:1.3rem; font-weight:700; margin-top:2px; color:var(--ink);}
+.stat.hero-stat .val{font-size:1.7rem;}
+.trendmsg{font-size:0.85rem; margin-top:10px; padding:10px; border-radius:10px; background:var(--bg); border:2px solid var(--line);}
+.trendmsg.over{background:rgba(38,78,54,0.12); color:var(--danger);}
+.trendmsg.good{background:rgba(127,172,141,0.15); color:var(--ink);}
+.note{font-size:0.75rem; color:var(--sub); margin-top:8px;}
+.empty{color:var(--sub); font-size:0.85rem; padding:8px 0;}
+nav.tabs{display:flex; gap:6px; margin-bottom:14px; position:sticky; top:0; background:var(--bg); padding:4px 0; z-index:5;}
+nav.tabs button{flex:1; background:var(--card); color:var(--ink); border:2px solid var(--line); padding:9px 4px; font-size:0.85rem;}
+nav.tabs button.active{background:var(--tab-active); color:#fff; border-color:var(--line);}
+.tabpane{display:none;}
+.tabpane.active{display:block;}
+svg text{fill:var(--ink); font-size:9px; font-weight:600; font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;}
+.regbadge{font-size:0.72rem; color:var(--accent); margin-left:4px; font-weight:600;}
+.freqbadge{font-size:0.7rem; color:var(--sub); margin-left:6px;}
+
+/* Perfectly aligned method badges */
+.methodbadge{
+  font-size:0.68rem; padding:3px 8px; border-radius:6px; font-weight:600;
+  display:inline-flex; align-items:center; justify-content:center;
+  height: 28px; margin-bottom:2px; box-shadow:none;
+}
+.methodbadge.bank{
+  background:#8B3A3A; color:#FFFFFF; border:1px solid #5A2525;
+}
+.methodbadge.card{
+  background:#FFFFFF; color:#2F4F4F; border:1px solid #263c38;
+}
+
+@media (max-width:420px){
+  .row{flex-direction:column; align-items:stretch;}
+  .field{min-width:0;}
+  .row > button{width:100%; height:41px;}
+}
+</style>
+</head>
+<body>
+
+<h1>🛒 Grocery & Budget Tracker</h1>
+<div class="sub" id="syncNote">Loading…</div>
+
+<nav class="tabs">
+  <button class="active" data-tab="overview" onclick="switchTab('overview')">Overview</button>
+  <button data-tab="other" onclick="switchTab('other')">Expenditure</button>
+  <button data-tab="grocery" onclick="switchTab('grocery')">Grocery</button>
+</nav>
+
+<!-- OVERVIEW -->
+<div class="tabpane active" id="tab-overview">
+
+  <div class="card">
+    <h2>Credit Card Tracker</h2>
+    <div class="stat hero-stat"><div class="label">Card spend this cycle</div><div class="val" id="statCard">RM 0.00</div></div>
+    <div class="note">Tag an expense "Card" when you log it in the Expenditure or Grocery tab and it adds here automatically -- no need to log the statement payment separately.</div>
+  </div>
+
+  <div class="card">
+    <h2>Spending by Day</h2>
+    <div class="row">
+      <select id="chartMonth"></select>
+      <select id="chartYear"></select>
+    </div>
+    <div id="chartArea"></div>
+    <div class="note" id="dayDetail"></div>
+    <div class="note">Tap a bar to see that day's spend vs. budget. Dashed line is your flat daily budget.</div>
+  </div>
+
+  <div class="card">
+    <h2>Spending by Category</h2>
+    <div id="categoryChartArea" class="empty">No categorized spend yet this month.</div>
+    <div class="note">Same month as the chart above. Grocery purchases are grouped as their own category.</div>
+  </div>
+
+  <div class="card">
+    <h2>Card vs Bank/QR</h2>
+    <div id="methodChartArea" class="empty">No tagged spend yet this month.</div>
+  </div>
+
+  <div class="card">
+    <h2 id="cycleLabel">This Cycle</h2>
+    <div class="grid2">
+      <div class="stat hero-stat"><div class="label">Left to spend</div><div class="val" id="statRemaining">RM 0.00</div></div>
+      <div class="stat"><div class="label">Day-to-day spend</div><div class="val" id="statDaily">RM 0.00</div></div>
+      <div class="stat"><div class="label">Bills & one-time</div><div class="val" id="statFixed">RM 0.00</div></div>
+    </div>
+    <div class="trendmsg" id="trendMsg">Start this cycle below to see your trend.</div>
+    <div class="row" style="margin-top:10px;">
+      <div class="field"><span class="flabel">Savings goal this cycle (RM)</span><input id="savingsGoal" type="number" placeholder="e.g. 1000"></div>
+      <button class="secondary" onclick="saveSettings()">Set Goal</button>
+    </div>
+    <div class="trendmsg" id="goalMsg"></div>
+  </div>
+
+  <div class="card">
+    <h2>Cycle</h2>
+    <button class="secondary" onclick="toggleCycleForm()" id="cycleFormToggle">Update Starting Amount</button>
+    <div class="note" id="cycleStatusNote" style="margin-top:8px;"></div>
+    <div id="cycleFormArea" style="display:none; margin-top:10px;">
+      <div class="row">
+        <div class="field"><span class="flabel">Starting with (RM)</span><input id="allocation" type="number" placeholder="e.g. 5000"></div>
+        <button onclick="startCycle()">Start Cycle</button>
+      </div>
+      <button class="link" onclick="toggleAdvanced()" id="advToggle">Adjust cycle settings</button>
+      <div id="advancedSettings" style="display:none; margin-top:8px;">
+        <div class="row">
+          <div class="field"><span class="flabel">Payday (day of month)</span><input id="cycleStart" type="number" min="1" max="28" placeholder="1-28"></div>
+        </div>
+        <button class="secondary" onclick="saveSettings()">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Export</h2>
+    <div class="row" style="align-items:center; gap:10px;">
+      <button class="secondary" onclick="exportToAI()">Export to AI</button>
+      <span id="copiedTick" style="display:none; color:var(--accent); font-size:0.85rem;">&#10003; Copied</span>
+    </div>
+    <div class="note">Copies a plain-text summary of this cycle to your clipboard -- paste it here for me to analyze.</div>
+  </div>
+</div>
+
+<!-- EXPENDITURE -->
+<div class="tabpane" id="tab-other">
+  <div class="card">
+    <h2>Log Expense</h2>
+    <div class="row">
+      <div class="field"><span class="flabel">Date</span><input id="expDate" type="date"></div>
+      <div class="field"><span class="flabel">What for</span><input id="expName" placeholder="e.g. lunch"></div>
+    </div>
+    <div class="row">
+      <div class="field"><span class="flabel">Category</span>
+        <select id="expCategory">
+          <option value="Fuel">Fuel</option>
+          <option value="Food">Food</option>
+          <option value="Transport">Transport</option>
+          <option value="Shopping">Shopping</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="E-Wallet">E-Wallet</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+      <div class="field"><span class="flabel">Paid with</span>
+        <select id="expMethod">
+          <option value="card">Card</option>
+          <option value="bank">Bank / QR</option>
+        </select>
+      </div>
+    </div>
+    <div class="row">
+      <div class="field"><span class="flabel">Amount (RM)</span><input id="expAmount" type="number" placeholder="0"></div>
+      <button onclick="logExpense()">Add</button>
+    </div>
+
+    <div class="row" style="margin-top:10px;">
+      <div class="field"><span class="flabel">View</span>
+        <select id="expViewMode" onchange="onExpViewModeChange()">
+          <option value="today">Today</option>
+          <option value="month">This Month</option>
+          <option value="custom">Custom Range</option>
+        </select>
+      </div>
+    </div>
+    <div class="row" id="expCustomRangeRow" style="display:none;">
+      <div class="field"><span class="flabel">From</span><input id="expRangeFrom" type="date"></div>
+      <div class="field"><span class="flabel">To</span><input id="expRangeTo" type="date"></div>
+    </div>
+    <div class="row" style="justify-content:space-between; margin-top:10px;">
+      <span class="note" id="expListSummary" style="margin:0;"></span>
+      <button class="ghost" id="expListToggle" onclick="toggleExpenseList()">Show</button>
+    </div>
+    <div id="expenseListArea" style="display:none; margin-top:8px;"></div>
+  </div>
+
+  <div class="card">
+    <h2>Installments</h2>
+    <div class="row">
+      <div class="field"><span class="flabel">Name</span><input id="upName" placeholder="e.g. Phone installment"></div>
+      <div class="field"><span class="flabel">Monthly (RM)</span><input id="upAmount" type="number" placeholder="0"></div>
+    </div>
+    <div class="row">
+      <div class="field"><span class="flabel">Starts</span><input id="upStart" type="date"></div>
+      <div class="field"><span class="flabel">Duration (months)</span><input id="upMonths" type="number" placeholder="12"></div>
+      <button onclick="addUpcoming()">Add</button>
+    </div>
+    <div class="row" id="upcomingSummaryRow" style="justify-content:space-between; margin-top:10px;">
+      <span class="note" id="upcomingSummary" style="margin:0;"></span>
+      <button class="ghost" id="upcomingToggle" onclick="toggleUpcomingList()">Show</button>
+    </div>
+    <div id="upcomingList" class="empty" style="display:none; margin-top:8px;">No installments yet.</div>
+    <div class="note">A fixed-term payment plan with an end date (e.g. a 12-month device installment) -- different from Recurring Bills, which never end. Shows for visibility before its start date, then counts automatically until its duration finishes.</div>
+  </div>
+
+  <div class="card">
+    <h2>Recurring Bills</h2>
+    <div class="row">
+      <div class="field"><span class="flabel">Name</span><input id="recName" placeholder="Home loan"></div>
+      <div class="field"><span class="flabel">Amount (RM)</span><input id="recAmount" type="number" placeholder="0"></div>
+      <div class="field"><span class="flabel">Repeats</span>
+        <select id="recFreq">
+          <option value="monthly">Monthly</option>
+          <option value="weekly">Weekly</option>
+          <option value="yearly">Yearly</option>
+        </select>
+      </div>
+      <button onclick="addRecurring()">Add</button>
+    </div>
+    <div class="row" id="recSummaryRow" style="justify-content:space-between; display:none; margin-top:10px;">
+      <span class="note" id="recSummary" style="margin:0;"></span>
+      <button class="ghost" id="recToggle" onclick="toggleRecurringList()">Show</button>
+    </div>
+    <div id="recurringList" class="empty" style="margin-top:8px;">No bills added yet.</div>
+    <div class="note">Weekly/yearly amounts are converted to an equivalent cost for this cycle.</div>
+  </div>
+</div>
+
+<!-- GROCERY -->
+<div class="tabpane" id="tab-grocery">
+  <div class="card">
+    <h2>Add Item</h2>
+    <div class="row">
+      <div class="field"><span class="flabel">Item</span><input id="itemName" list="itemSuggestions" placeholder="e.g. eggs" onblur="prefillPrice()"></div>
+      <datalist id="itemSuggestions"></datalist>
+      <div class="field" style="max-width:80px;"><span class="flabel">Qty</span><input id="itemQty" type="number" value="1"></div>
+    </div>
+    <div class="row">
+      <div class="field"><span class="flabel">Est. price each (RM)</span><input id="itemPrice" type="number" placeholder="0"></div>
+      <div class="field"><span class="flabel">Usually paid with</span>
+        <select id="itemMethod">
+          <option value="card">Card</option>
+          <option value="bank">Bank / QR</option>
+        </select>
+      </div>
+      <button onclick="addItem()">Add</button>
+    </div>
+  </div>
+  <div class="card">
+    <h2>Shopping List</h2>
+    <div id="listArea" class="empty">No items yet.</div>
+    <div class="row" style="margin-top:10px; justify-content:space-between; align-items:center;">
+      <div>Estimated total: <b id="estTotal">RM 0.00</b></div>
+      <button class="secondary" onclick="shareList()">Share list</button>
+    </div>
+    <div class="note">Add this app to your home screen (Safari share icon &rarr; Add to Home Screen) for one-tap access while shopping. "Share list" sends your pending items to Reminders, Notes, or Messages.</div>
+  </div>
+</div>
+
+<script>
+const GOOGLE_URL = 'https://script.google.com/macros/s/AKfycby8ycwTqO5ATOX8RlhAF4wyVfnU6Ah_xzcWczKT37IYBvfHdUduGzGBVT9hpzPSVHAC/exec';
+
+let settings = { cycleStart:1, allocation:0, savingsGoal:0 };
+let transactions = []; 
+let recurring = []; 
+let upcoming = []; 
+let groceryList = [];
+let registry = {};
+let chartDate = new Date();
+let advancedOpen = false;
+let editingExpenseId = null;
+let editingRecurringId = null;
+let editingUpcomingId = null;
+let recurringExpanded = false;
+let upcomingExpanded = false;
+
+function todayStr(d){ d = d || new Date(); const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return y+'-'+m+'-'+day; }
+
+async function syncToSheet(sheetName, items) {
+  try {
+    await fetch(GOOGLE_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ sheet: sheetName, items: Array.isArray(items) ? items : [items] })
+    });
+  } catch(e) {
+    console.log('Sync error:', e);
+  }
+}
+
+async function initDb(){
+  const note = document.getElementById('syncNote');
+  note.textContent = 'Connecting to Google Drive...';
+  try {
+    const res = await fetch(GOOGLE_URL);
+    const data = await res.json();
+    
+    if (data.settings && data.settings.length > 0) {
+      settings = Object.assign(settings, data.settings[0]);
+    }
+    if (data.transactions) {
+      transactions = data.transactions.map(function(t){
+        if (t.date) {
+          const d = new Date(t.date);
+          if (!isNaN(d)) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            t.date = y + '-' + m + '-' + day;
+          }
+        }
+        return t;
+      });
+    }
+    if (data.recurring) recurring = data.recurring;
+    if (data.upcoming) {
+      upcoming = data.upcoming.map(function(u){
+        if (u.startDate) {
+          const d = new Date(u.startDate);
+          if (!isNaN(d)) {
+            const y = d.getFullYear();
+            const m = String(d.getMonth() + 1).padStart(2, '0');
+            const day = String(d.getDate()).padStart(2, '0');
+            u.startDate = y + '-' + m + '-' + day;
+          }
+        }
+        return u;
+      });
+    }
+    if (data.groceryList) groceryList = data.groceryList;
+    if (data.registry && data.registry.length > 0) {
+      registry = data.registry.reduce((acc, row) => {
+        if(row.key) acc[row.key] = row.value;
+        return acc;
+      }, {});
+    }
+    
+    note.textContent = 'Synced with Google Drive ✔';
+  } catch(e) {
+    note.textContent = 'Offline -- using local data.';
+  }
+
+  document.getElementById('cycleStart').value = settings.cycleStart||'';
+  document.getElementById('allocation').value = settings.allocation||'';
+  document.getElementById('savingsGoal').value = settings.savingsGoal||'';
+  document.getElementById('expDate').value = todayStr();
+  document.getElementById('expDate').max = todayStr();
+  populateChartSelectors();
+  renderAll();
+}
+
+function switchTab(name){
+  document.querySelectorAll('.tabpane').forEach(function(p){ p.classList.remove('active'); });
+  document.getElementById('tab-'+name).classList.add('active');
+  document.querySelectorAll('nav.tabs button').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===name); });
+}
+
+function toggleAdvanced(){
+  advancedOpen = !advancedOpen;
+  document.getElementById('advancedSettings').style.display = advancedOpen ? 'block' : 'none';
+  document.getElementById('advToggle').textContent = advancedOpen ? 'Hide cycle settings' : 'Adjust cycle settings';
+}
+
+let cycleFormOpen = false;
+function toggleCycleForm(){
+  cycleFormOpen = !cycleFormOpen;
+  document.getElementById('cycleFormArea').style.display = cycleFormOpen ? 'block' : 'none';
+  document.getElementById('cycleFormToggle').textContent = cycleFormOpen ? 'Hide' : 'Update Starting Amount';
+}
+
+async function startCycle(){
+  const amount = parseFloat(document.getElementById('allocation').value);
+  if(isNaN(amount)) return;
+  settings.allocation = amount;
+  settings.cycleStart = new Date().getDate();
+  document.getElementById('cycleStart').value = settings.cycleStart;
+  syncToSheet('settings', [settings]);
+  renderAll();
+}
+
+async function saveSettings(){
+  settings.cycleStart = parseInt(document.getElementById('cycleStart').value)||settings.cycleStart||1;
+  settings.allocation = parseFloat(document.getElementById('allocation').value)||settings.allocation||0;
+  settings.savingsGoal = parseFloat(document.getElementById('savingsGoal').value)||0;
+  syncToSheet('settings', [settings]);
+  renderAll();
+}
+
+function cycleRange(ref){
+  ref = ref || new Date();
+  const day = settings.cycleStart||1;
+  const y = ref.getFullYear(), m = ref.getMonth();
+  let start = new Date(y, m, day, 0, 0, 0);
+  if(ref.getDate() < day) {
+    start = new Date(y, m - 1, day, 0, 0, 0);
+  }
+  const end = new Date(start.getFullYear(), start.getMonth() + 1, day - 1, 23, 59, 59);
+  return {start: start, end: end};
+}
+
+function sumInRange(start, end, types, method){
+  const s = todayStr(start), e = todayStr(end);
+  return transactions.filter(function(t){
+    const matchesDate = t.date >= s && t.date <= e;
+    const matchesType = !types || types.indexOf(t.type) >= 0;
+    const matchesMethod = !method || (t.method && t.method.toLowerCase() === method.toLowerCase());
+    return matchesDate && matchesType && matchesMethod;
+  }).reduce(function(sum,t){ return sum + parseFloat(t.amount || 0); }, 0);
+}
+
+function recurringTotalForCycle(totalDays, start, end){
+  let total = recurring.reduce(function(sum, r){
+    let norm = parseFloat(r.amount||0);
+    if(r.frequency==='weekly') norm = norm * (totalDays/7);
+    else if(r.frequency==='yearly') norm = norm * (totalDays/365);
+    return sum + norm;
+  }, 0);
+  upcoming.forEach(function(u){
+    if(!u.startDate) return;
+    const started = u.startDate <= todayStr(end);
+    if(!started) return;
+    const sd = new Date(u.startDate+'T00:00:00');
+    const monthsElapsed = (start.getFullYear()-sd.getFullYear())*12 + (start.getMonth()-sd.getMonth());
+    if(monthsElapsed >=0 && monthsElapsed < (parseInt(u.months)||1)) total += parseFloat(u.amount||0);
+  });
+  return total;
+}
+
+function upcomingStatus(u){
+  const today = todayStr();
+  if(u.startDate > today) return 'Starts ' + u.startDate;
+  const sd = new Date(u.startDate+'T00:00:00');
+  const now = new Date();
+  const monthsElapsed = (now.getFullYear()-sd.getFullYear())*12 + (now.getMonth()-sd.getMonth()) + 1;
+  if(monthsElapsed > (parseInt(u.months)||1)) return 'Completed';
+  return 'Month ' + monthsElapsed + ' of ' + (parseInt(u.months)||1);
+}
+
+function renderDashboard(){
+  const range = cycleRange(), start = range.start, end = range.end;
+  document.getElementById('cycleLabel').textContent = 'Cycle: ' + start.toDateString().slice(4) + ' to ' + end.toDateString().slice(4);
+  document.getElementById('cycleStatusNote').textContent = settings.allocation
+    ? ('Running: started on day ' + settings.cycleStart + ' with RM ' + parseFloat(settings.allocation).toFixed(2) + '.')
+    : 'Enter an amount and tap Start Cycle to begin tracking.';
+  const today = new Date();
+  const cappedEnd = today > end ? end : today;
+  const totalDays = Math.round((end-start)/86400000)+1;
+  const daysElapsed = Math.max(Math.round((cappedEnd-start)/86400000)+1, 1);
+  const daysLeft = Math.max(totalDays-daysElapsed,0);
+
+  const dayToDayTypes = ['daily','grocery'];
+  const fixedTypes = ['oneoff'];
+  const dayToDaySpent = sumInRange(start, cappedEnd, dayToDayTypes);
+  const oneoffSpent = sumInRange(start, cappedEnd, fixedTypes);
+  const recurringTotal = recurringTotalForCycle(totalDays, start, end);
+  const fixedTotal = recurringTotal + oneoffSpent;
+  const available = parseFloat(settings.allocation||0);
+  const remaining = available - fixedTotal - dayToDaySpent;
+  const cardSpent = sumInRange(start, cappedEnd, null, 'card');
+
+  document.getElementById('statDaily').textContent = 'RM ' + dayToDaySpent.toFixed(2);
+  document.getElementById('statFixed').textContent = 'RM ' + fixedTotal.toFixed(2);
+  document.getElementById('statRemaining').textContent = 'RM ' + remaining.toFixed(2);
+  document.getElementById('statCard').textContent = 'RM ' + cardSpent.toFixed(2);
+
+  const trendBox = document.getElementById('trendMsg');
+  if(!settings.allocation){
+    trendBox.className='trendmsg';
+    trendBox.textContent = 'Start this cycle above to see your spend targets.';
+  } else {
+    const avgDaily = dayToDaySpent/daysElapsed;
+    const projected = avgDaily*totalDays;
+    const availableForPace = available - fixedTotal;
+    const diff = availableForPace - projected;
+    if(diff < 0){
+      const overBy = Math.abs(diff);
+      const capPerDay = daysLeft>0 ? remaining/daysLeft : 0;
+      trendBox.className='trendmsg over';
+      trendBox.textContent = 'At your current pace you will go RM ' + overBy.toFixed(2) + ' over this cycle. Keep day-to-day spend under RM ' + Math.max(capPerDay,0).toFixed(2) + '/day for the rest of the cycle to break even.';
+    } else {
+      trendBox.className='trendmsg good';
+      trendBox.textContent = 'At your current pace you are on track to come in RM ' + diff.toFixed(2) + ' under budget this cycle.';
+    }
+  }
+
+  const goalMsg = document.getElementById('goalMsg');
+  if(!settings.allocation){
+    goalMsg.style.display = 'none';
+  } else if(!settings.savingsGoal){
+    goalMsg.style.display = 'block';
+    goalMsg.className = 'trendmsg';
+    goalMsg.textContent = 'Set a savings goal above to see your daily spending target.';
+  } else {
+    const availableForDaily = available - fixedTotal - parseFloat(settings.savingsGoal||0);
+    const remainingForDaily = availableForDaily - dayToDaySpent;
+    const daysLeftInclToday = Math.max(totalDays - daysElapsed + 1, 1);
+    const dailyCap = remainingForDaily / daysLeftInclToday;
+    goalMsg.style.display = 'block';
+    if(dailyCap >= 0){
+      goalMsg.className = 'trendmsg good';
+      goalMsg.textContent = 'To save RM ' + parseFloat(settings.savingsGoal).toFixed(2) + ' this cycle, keep day-to-day spend under RM ' + dailyCap.toFixed(2) + '/day for the ' + daysLeftInclToday + ' day(s) left (today included). You have spent RM ' + dayToDaySpent.toFixed(2) + ' on day-to-day so far.';
+    } else {
+      goalMsg.className = 'trendmsg over';
+      goalMsg.textContent = 'You have already spent RM ' + Math.abs(remainingForDaily).toFixed(2) + ' more than your RM ' + parseFloat(settings.savingsGoal).toFixed(2) + ' goal allows for the rest of this cycle. Hitting it now would mean spending close to nothing for the remaining ' + daysLeftInclToday + ' day(s) -- you may want to adjust the goal.';
+    }
+  }
+
+  renderChart();
+}
+
+function populateChartSelectors(){
+  const mSel = document.getElementById('chartMonth'), ySel = document.getElementById('chartYear');
+  const names = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  mSel.innerHTML = names.map(function(n,i){ return '<option value="'+i+'">'+n+'</option>'; }).join('');
+  mSel.value = chartDate.getMonth();
+  const y = new Date().getFullYear();
+  ySel.innerHTML = [y-2,y-1,y,y+1].map(function(yy){ return '<option value="'+yy+'">'+yy+'</option>'; }).join('');
+  ySel.value = chartDate.getFullYear();
+  mSel.onchange = function(){ chartDate.setMonth(parseInt(mSel.value)); renderChart(); };
+  ySel.onchange = function(){ chartDate.setFullYear(parseInt(ySel.value)); renderChart(); };
+}
+
+function renderChart(){
+  const y = chartDate.getFullYear(), m = chartDate.getMonth();
+  const daysInMonth = new Date(y, m+1, 0).getDate();
+  const totals = new Array(daysInMonth+1).fill(0);
+  transactions.forEach(function(t){
+    const d = new Date(t.date+'T00:00:00');
+    if(d.getFullYear()===y && d.getMonth()===m) totals[d.getDate()] += parseFloat(t.amount||0);
+  });
+  const range = cycleRange(), cstart = range.start, cend = range.end;
+  const cTotalDays = Math.round((cend-cstart)/86400000)+1;
+  const cRecurring = recurringTotalForCycle(cTotalDays, cstart, cend);
+  const budgetPerDay = settings.allocation ? Math.max((parseFloat(settings.allocation) - cRecurring - parseFloat(settings.savingsGoal||0)) / cTotalDays, 0) : 0;
+  const max = Math.max.apply(null, totals.concat([budgetPerDay, 1]));
+  const w = 320, h = 140, barW = w/daysInMonth;
+  let bars = '';
+  for(let day=1; day<=daysInMonth; day++){
+    const val = totals[day];
+    const bh = (val/max)*(h-20);
+    const x = (day-1)*barW;
+    const over = budgetPerDay>0 && val>budgetPerDay;
+    const color = budgetPerDay>0 ? (over?'var(--danger)':'var(--accent)') : 'var(--accent)';
+    bars += '<rect x="'+(x+1)+'" y="'+(h-bh-14)+'" width="'+Math.max(barW-2,1)+'" height="'+bh+'" fill="'+color+'" rx="1" style="cursor:pointer;" onclick="showDayDetail('+day+','+val+','+budgetPerDay+')"></rect>';
+    if(day%5===0 || day===1) bars += '<text x="'+(x+barW/2)+'" y="'+(h-2)+'" text-anchor="middle">'+day+'</text>';
+  }
+  if(budgetPerDay>0){
+    const ly = h-14-(budgetPerDay/max)*(h-20);
+    bars += '<line x1="0" y1="'+ly+'" x2="'+w+'" y2="'+ly+'" stroke="var(--sub)" stroke-width="1" stroke-dasharray="4,3"></line>';
+  }
+  document.getElementById('chartArea').innerHTML = '<svg viewBox="0 0 '+w+' '+h+'" style="width:100%; height:auto;">'+bars+'</svg>';
+  document.getElementById('dayDetail').textContent = '';
+  renderCategoryChart(y, m);
+  renderMethodChart(y, m);
+}
+
+function renderCategoryChart(y, m){
+  const sums = {};
+  transactions.forEach(function(t){
+    const d = new Date(t.date+'T00:00:00');
+    if(d.getFullYear()!==y || d.getMonth()!==m) return;
+    const amt = parseFloat(t.amount||0);
+    if(t.type==='daily'){ const c=t.category||'Other'; sums[c]=(sums[c]||0)+amt; }
+    else if(t.type==='grocery'){ sums['Grocery']=(sums['Grocery']||0)+amt; }
+  });
+  const entries = Object.keys(sums).map(function(k){ return {name:k, val:sums[k]}; }).sort(function(a,b){ return b.val-a.val; });
+  const el = document.getElementById('categoryChartArea');
+  if(entries.length===0){ el.className='empty'; el.textContent='No categorized spend yet this month.'; return; }
+  el.className='';
+  const max = entries[0].val;
+  el.innerHTML = entries.map(function(e){
+    const pct = Math.max((e.val/max)*100, 4);
+    return '<div style="margin-bottom:8px;">'+
+      '<div class="row" style="justify-content:space-between; margin-bottom:2px;"><span style="font-size:0.85rem;">'+e.name+'</span><span style="font-size:0.85rem; font-weight:600;">RM '+e.val.toFixed(2)+'</span></div>'+
+      '<div style="background:var(--line); border-radius:6px; height:10px; overflow:hidden;"><div style="width:'+pct+'%; height:100%; background:var(--accent);"></div></div>'+
+      '</div>';
+  }).join('');
+}
+
+function renderMethodChart(y, m){
+  let card=0, bank=0;
+  transactions.forEach(function(t){
+    const d = new Date(t.date+'T00:00:00');
+    if(d.getFullYear()!==y || d.getMonth()!==m) return;
+    const amt = parseFloat(t.amount||0);
+    if(t.type==='daily' || t.type==='grocery' || t.type==='oneoff'){
+      if(t.method==='card') card+=amt; else if(t.method==='bank') bank+=amt;
+    }
+  });
+  const total = card+bank;
+  const el = document.getElementById('methodChartArea');
+  if(total===0){ el.className='empty'; el.textContent='No tagged spend yet this month.'; return; }
+  el.className='';
+  const cardPct = (card/total*100), bankPct=(bank/total*100);
+  el.innerHTML = '<div style="display:flex; border-radius:8px; overflow:hidden; height:28px; margin-bottom:8px;">'+
+    (card>0?'<div style="width:'+cardPct+'%; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:#fff;">'+cardPct.toFixed(0)+'%</div>':'')+
+    (bank>0?'<div style="width:'+bankPct+'%; background:var(--warn); display:flex; align-items:center; justify-content:center; font-size:0.75rem; color:#fff;">'+bankPct.toFixed(0)+'%</div>':'')+
+    '</div>'+
+    '<div class="row" style="justify-content:space-between; font-size:0.8rem; color:var(--sub);"><span>Card: RM '+card.toFixed(2)+'</span><span>Bank/QR: RM '+bank.toFixed(2)+'</span></div>';
+}
+
+function showDayDetail(day, val, budget){
+  const mm = String(chartDate.getMonth()+1).padStart(2,'0'), dd = String(day).padStart(2,'0');
+  const dateLabel = chartDate.getFullYear()+'-'+mm+'-'+dd;
+  const el = document.getElementById('dayDetail');
+  if(budget>0){
+    const diff = val - budget;
+    el.textContent = dateLabel + ': spent RM ' + val.toFixed(2) + ' -- RM ' + Math.abs(diff).toFixed(2) + (diff>0?' over':' under') + ' budget (RM ' + budget.toFixed(2) + '/day).';
+  } else {
+    el.textContent = dateLabel + ': spent RM ' + val.toFixed(2) + '. Start a cycle on Overview to compare against a daily budget.';
+  }
+}
+
+async function logExpense(){
+  const date = document.getElementById('expDate').value || todayStr();
+  const name = document.getElementById('expName').value.trim();
+  const amount = parseFloat(document.getElementById('expAmount').value);
+  if(isNaN(amount)) return;
+  const category = document.getElementById('expCategory').value;
+  const method = document.getElementById('expMethod').value;
+  const id = 'daily_'+Date.now();
+  const tx = {id:id, date:date, amount:amount, type:'daily', category:category, method:method, note:name};
+  transactions.push(tx);
+  syncToSheet('transactions', transactions);
+  document.getElementById('expName').value=''; document.getElementById('expAmount').value='';
+  document.getElementById('expDate').value = todayStr();
+  renderAll();
+}
+
+async function removeExpense(id){
+  transactions = transactions.filter(function(t){ return t.id!==id; });
+  syncToSheet('transactions', transactions);
+  renderAll();
+}
+
+function editExpense(id){ editingExpenseId = id; renderExpenseList(); }
+function cancelExpenseEdit(){ editingExpenseId = null; renderExpenseList(); }
+
+async function saveExpenseEdit(id){
+  const date = document.getElementById('editExpDate').value;
+  const name = document.getElementById('editExpName').value.trim();
+  const amount = parseFloat(document.getElementById('editExpAmount').value);
+  const category = document.getElementById('editExpCategory').value;
+  const method = document.getElementById('editExpMethod').value;
+  if(!date || isNaN(amount)) return;
+  const item = transactions.find(function(t){ return t.id===id; });
+  if(item){ item.date=date; item.note=name; item.amount=amount; item.category=category; item.method=method; }
+  syncToSheet('transactions', transactions);
+  editingExpenseId = null;
+  renderAll();
+}
+
+function expenseRowHtml(d){
+  const amt = parseFloat(d.amount||0);
+  if(d.id===editingExpenseId){
+    const cats = ['Fuel','Food','Transport','Shopping','Entertainment','E-Wallet','Other'];
+    return '<div class="item" style="flex-direction:column; align-items:stretch; gap:6px;">'+
+      '<div class="row"><input id="editExpDate" type="date" value="'+d.date+'">'+
+      '<input id="editExpName" value="'+(d.note||'').replace(/"/g,'&quot;')+'"></div>'+
+      '<div class="row"><select id="editExpCategory">'+cats.map(function(c){ return '<option value="'+c+'"'+(d.category===c?' selected':'')+'>'+c+'</option>'; }).join('')+'</select>'+
+      '<select id="editExpMethod"><option value="card"'+(d.method==='card'?' selected':'')+'>Card</option><option value="bank"'+(d.method!=='card'?' selected':'')+'>Bank / QR</option></select></div>'+
+      '<div class="row"><input id="editExpAmount" type="number" value="'+amt+'">'+
+      '<button onclick="saveExpenseEdit(\''+d.id+'\')">Save</button>'+
+      '<button class="ghost" onclick="cancelExpenseEdit()">Cancel</button></div></div>';
+  }
+  const isCard = (d.method || '').toLowerCase() === 'card';
+  const badgeClass = isCard ? 'methodbadge card' : 'methodbadge bank';
+  const badgeText = isCard ? 'Card' : 'Bank';
+  
+  return '<div class="item"><div><b>'+(d.note||d.category||'Expense')+'</b><div class="meta">'+d.date+' &middot; '+(d.category||'')+'</div></div>'+
+    '<div class="row" style="gap:6px; align-items:flex-end; margin-bottom:0;"><span>RM '+amt.toFixed(2)+'</span><span class="'+badgeClass+'">'+badgeText+'</span>'+
+    '<button class="ghost" onclick="editExpense(\''+d.id+'\')">&#9998;</button>'+
+    '<button class="danger" onclick="removeExpense(\''+d.id+'\')">x</button></div></div>';
+}
+
+let expViewMode = 'today';
+let expListExpanded = false;
+
+function onExpViewModeChange(){
+  expViewMode = document.getElementById('expViewMode').value;
+  document.getElementById('expCustomRangeRow').style.display = expViewMode==='custom' ? 'flex' : 'none';
+  renderExpenseList();
+}
+
+function toggleExpenseList(){ expListExpanded = !expListExpanded; renderExpenseList(); }
+
+function getExpenseRangeDates(){
+  const today = new Date();
+  if(expViewMode==='today'){
+    const t = todayStr();
+    return {from:t, to:t};
+  }
+  if(expViewMode==='month'){
+    const y=today.getFullYear(), m=today.getMonth();
+    const mm = String(m+1).padStart(2,'0');
+    const lastDay = new Date(y,m+1,0).getDate();
+    return {from:y+'-'+mm+'-01', to:y+'-'+mm+'-'+String(lastDay).padStart(2,'0')};
+  }
+  const from = document.getElementById('expRangeFrom').value || '0000-01-01';
+  const to = document.getElementById('expRangeTo').value || '9999-12-31';
+  return {from:from, to:to};
+}
+
+function renderExpenseList(){
+  const range = getExpenseRangeDates();
+  const all = transactions.filter(function(t){ return t.type==='daily' && t.date>=range.from && t.date<=range.to; }).sort(function(a,b){ return b.date.localeCompare(a.date); });
+  const total = all.reduce(function(s,t){ return s+parseFloat(t.amount||0); }, 0);
+  const modeLabel = expViewMode==='today' ? 'Today' : expViewMode==='month' ? 'This Month' : 'Custom Range';
+  document.getElementById('expListSummary').textContent = modeLabel + ' \u00b7 ' + all.length + ' entr' + (all.length===1?'y':'ies') + ' \u00b7 RM ' + total.toFixed(2);
+  const toggle = document.getElementById('expListToggle');
+  toggle.textContent = expListExpanded ? 'Hide' : 'Show';
+  const area = document.getElementById('expenseListArea');
+  area.style.display = expListExpanded ? 'block' : 'none';
+  area.innerHTML = all.length ? all.map(expenseRowHtml).join('') : '<div class="empty">No entries in this range.</div>';
+}
+
+async function addRecurring(){
+  const name = document.getElementById('recName').value.trim();
+  const amount = parseFloat(document.getElementById('recAmount').value);
+  const frequency = document.getElementById('recFreq').value;
+  if(!name || isNaN(amount)) return;
+  const item = {id:'r'+Date.now(), name:name, amount:amount, frequency:frequency};
+  recurring.push(item);
+  syncToSheet('recurring', recurring);
+  document.getElementById('recName').value=''; document.getElementById('recAmount').value='';
+  renderAll();
+}
+
+async function removeRecurring(id){
+  recurring = recurring.filter(function(r){ return r.id!==id; });
+  syncToSheet('recurring', recurring);
+  renderAll();
+}
+
+function toggleRecurringList(){ recurringExpanded = !recurringExpanded; renderRecurring(); }
+function editRecurring(id){ editingRecurringId = id; recurringExpanded = true; renderRecurring(); }
+function cancelRecurringEdit(){ editingRecurringId = null; renderRecurring(); }
+
+async function saveRecurringEdit(id){
+  const name = document.getElementById('editRecName').value.trim();
+  const amount = parseFloat(document.getElementById('editRecAmount').value);
+  const frequency = document.getElementById('editRecFreq').value;
+  if(!name || isNaN(amount)) return;
+  const item = recurring.find(function(r){ return r.id===id; });
+  if(item){ item.name=name; item.amount=amount; item.frequency=frequency; }
+  syncToSheet('recurring', recurring);
+  editingRecurringId = null;
+  renderAll();
+}
+
+function renderRecurring(){
+  const summaryRow = document.getElementById('recSummaryRow');
+  const toggle = document.getElementById('recToggle');
+  const el = document.getElementById('recurringList');
+  if(recurring.length===0){
+    summaryRow.style.display='none';
+    el.className='empty'; el.textContent='No bills added yet.';
+    return;
+  }
+  const total = recurring.reduce(function(s,r){ return s+parseFloat(r.amount||0); }, 0);
+  summaryRow.style.display='flex';
+  document.getElementById('recSummary').textContent = recurring.length + ' bill(s) \u00b7 RM ' + total.toFixed(2) + '/mo total';
+  toggle.textContent = recurringExpanded ? 'Hide' : 'Show';
+  if(!recurringExpanded && !editingRecurringId){ el.style.display='none'; return; }
+  el.style.display='block';
+  el.className='';
+  el.innerHTML = recurring.map(function(r){
+    const amt = parseFloat(r.amount||0);
+    if(r.id===editingRecurringId){
+      return '<div class="item" style="flex-direction:column; align-items:stretch; gap:6px;">'+
+        '<div class="row"><input id="editRecName" value="'+r.name.replace(/"/g,'&quot;')+'">'+
+        '<input id="editRecAmount" type="number" value="'+amt+'">'+
+        '<select id="editRecFreq">'+
+          '<option value="monthly"'+(r.frequency==='monthly'?' selected':'')+'>Monthly</option>'+
+          '<option value="weekly"'+(r.frequency==='weekly'?' selected':'')+'>Weekly</option>'+
+          '<option value="yearly"'+(r.frequency==='yearly'?' selected':'')+'>Yearly</option>'+
+        '</select></div>'+
+        '<div class="row"><button onclick="saveRecurringEdit(\''+r.id+'\')">Save</button>'+
+        '<button class="ghost" onclick="cancelRecurringEdit()">Cancel</button></div></div>';
+    }
+    return '<div class="item"><div><b>'+r.name+'</b><span class="freqbadge">'+r.frequency+'</span></div>'+
+      '<div class="row" style="gap:6px; align-items:flex-end; margin-bottom:0;"><span>RM '+amt.toFixed(2)+'</span>'+
+      '<button class="ghost" onclick="editRecurring(\''+r.id+'\')">&#9998;</button>'+
+      '<button class="danger" onclick="removeRecurring(\''+r.id+'\')">x</button></div></div>';
+  }).join('');
+}
+
+async function addUpcoming(){
+  const name = document.getElementById('upName').value.trim();
+  const amount = parseFloat(document.getElementById('upAmount').value);
+  const startDate = document.getElementById('upStart').value;
+  const months = parseInt(document.getElementById('upMonths').value)||1;
+  if(!name || isNaN(amount) || !startDate) return;
+  const item = {id:'u'+Date.now(), name:name, amount:amount, startDate:startDate, months:months};
+  upcoming.push(item);
+  syncToSheet('upcoming', upcoming);
+  document.getElementById('upName').value=''; document.getElementById('upAmount').value=''; document.getElementById('upStart').value=''; document.getElementById('upMonths').value='';
+  renderAll();
+}
+
+async function removeUpcoming(id){
+  upcoming = upcoming.filter(function(u){ return u.id!==id; });
+  syncToSheet('upcoming', upcoming);
+  renderAll();
+}
+
+function toggleUpcomingList(){ upcomingExpanded = !upcomingExpanded; renderUpcoming(); }
+function editUpcoming(id){ editingUpcomingId = id; upcomingExpanded = true; renderUpcoming(); }
+function cancelUpcomingEdit(){ editingUpcomingId = null; renderUpcoming(); }
+
+async function saveUpcomingEdit(id){
+  const name = document.getElementById('editUpName').value.trim();
+  const amount = parseFloat(document.getElementById('editUpAmount').value);
+  const startDate = document.getElementById('editUpStart').value;
+  const months = parseInt(document.getElementById('editUpMonths').value) || 1;
+  if(!name || isNaN(amount) || !startDate) return;
+  
+  const item = upcoming.find(function(u){ return u.id===id; });
+  if(item){
+    item.name = name;
+    item.amount = amount;
+    item.startDate = startDate;
+    item.months = months;
+  }
+  syncToSheet('upcoming', upcoming);
+  editingUpcomingId = null;
+  renderAll();
+}
+
+function renderUpcoming(){
+  const summaryRow = document.getElementById('upcomingSummaryRow');
+  const toggle = document.getElementById('upcomingToggle');
+  const el = document.getElementById('upcomingList');
+  
+  if(upcoming.length===0){
+    summaryRow.style.display='none';
+    el.className='empty'; el.style.display='none'; el.textContent='No installments yet.';
+    return;
+  }
+  
+  summaryRow.style.display='flex';
+  const total = upcoming.reduce(function(s,u){ return s+parseFloat(u.amount||0); }, 0);
+  document.getElementById('upcomingSummary').textContent = upcoming.length + ' installment(s) \u00b7 RM ' + total.toFixed(2) + '/mo total';
+  toggle.textContent = upcomingExpanded ? 'Hide' : 'Show';
+  
+  if(!upcomingExpanded && !editingUpcomingId){ el.style.display='none'; return; }
+  
+  el.style.display='block';
+  el.className='';
+  el.innerHTML = upcoming.map(function(u){
+    const amt = parseFloat(u.amount||0);
+    if(u.id === editingUpcomingId){
+      return '<div class="item" style="flex-direction:column; align-items:stretch; gap:6px;">'+
+        '<div class="row"><input id="editUpName" value="'+u.name.replace(/"/g,'&quot;')+'">'+
+        '<input id="editUpAmount" type="number" value="'+amt+'"></div>'+
+        '<div class="row"><input id="editUpStart" type="date" value="'+u.startDate+'">'+
+        '<input id="editUpMonths" type="number" value="'+(u.months||1)+'"></div>'+
+        '<div class="row"><button onclick="saveUpcomingEdit(\''+u.id+'\')">Save</button>'+
+        '<button class="ghost" onclick="cancelUpcomingEdit()">Cancel</button></div></div>';
+    }
+    return '<div class="item"><div><b>'+u.name+'</b><div class="meta">'+upcomingStatus(u)+'</div></div>'+
+      '<div class="row" style="gap:8px; align-items:flex-end; margin-bottom:0;"><span>RM '+amt.toFixed(2)+'/mo</span>'+
+      '<button class="ghost" onclick="editUpcoming(\''+u.id+'\')">&#9998;</button>'+
+      '<button class="danger" onclick="removeUpcoming(\''+u.id+'\')">x</button></div></div>';
+  }).join('');
+}
+
+function prefillPrice(){
+  const name = document.getElementById('itemName').value.trim().toLowerCase();
+  const priceField = document.getElementById('itemPrice');
+  if(name && registry[name] && !priceField.value) priceField.value = registry[name];
+}
+
+async function addItem(){
+  const name = document.getElementById('itemName').value.trim();
+  const qty = parseFloat(document.getElementById('itemQty').value)||1;
+  const price = parseFloat(document.getElementById('itemPrice').value)||0;
+  const method = document.getElementById('itemMethod').value;
+  if(!name) return;
+  const item = {id:'l'+Date.now(), name:name, qty:qty, price:price, method:method};
+  groceryList.push(item);
+  syncToSheet('groceryList', groceryList);
+  document.getElementById('itemName').value=''; document.getElementById('itemPrice').value='';
+  renderAll();
+}
+
+async function confirmBought(id, useEstimate){
+  const item = groceryList.find(function(i){ return i.id===id; });
+  if(!item) return;
+  let price = item.price;
+  if(!useEstimate){
+    const input = prompt('Price paid for ' + item.name + ' (each):', item.price);
+    if(input===null) return;
+    price = parseFloat(input); if(isNaN(price)) return;
+  }
+  const amount = price*item.qty;
+  const date = todayStr();
+  registry[item.name.toLowerCase()] = price;
+  
+  const regItems = Object.keys(registry).map(k => ({key: k, value: registry[k]}));
+  syncToSheet('registry', regItems);
+
+  const tx = {id:'g'+Date.now(), date:date, amount:amount, type:'grocery', method:item.method||'bank'};
+  transactions.push(tx);
+  syncToSheet('transactions', transactions);
+
+  groceryList = groceryList.filter(function(i){ return i.id!==id; });
+  syncToSheet('groceryList', groceryList);
+
+  renderAll();
+}
+
+async function removeItem(id){
+  groceryList = groceryList.filter(function(i){ return i.id!==id; });
+  syncToSheet('groceryList', groceryList);
+  renderAll();
+}
+
+function renderGrocery(){
+  document.getElementById('itemSuggestions').innerHTML = Object.keys(registry).map(function(k){ return '<option value="'+k+'">'; }).join('');
+  const listArea = document.getElementById('listArea');
+  if(groceryList.length===0){ listArea.className='empty'; listArea.textContent='No items yet.'; }
+  else{
+    listArea.className='';
+    listArea.innerHTML = groceryList.map(function(i){
+      const reg = registry[i.name.toLowerCase()];
+      const badge = reg ? ('<span class="regbadge">last: RM '+parseFloat(reg).toFixed(2)+'</span>') : '';
+      const qty = parseFloat(i.qty||1), price = parseFloat(i.price||0);
+      return '<div class="item">'+
+        '<div><b>'+i.name+'</b>'+badge+'<div class="meta">'+qty+' x RM '+price.toFixed(2)+'</div></div>'+
+        '<div class="row" style="gap:6px; align-items:flex-end; margin-bottom:0;">'+
+        '<button class="ghost" onclick="confirmBought(\'' + i.id + '\', true)">Bought</button>'+
+        '<button class="ghost" onclick="confirmBought(\'' + i.id + '\', false)">Different price</button>'+
+        '<button class="danger" onclick="removeItem(\'' + i.id + '\')">x</button>'+
+        '</div></div>';
+    }).join('');
+  }
+  const total = groceryList.reduce(function(s,i){ return s+(parseFloat(i.qty||1)*parseFloat(i.price||0)); }, 0);
+  document.getElementById('estTotal').textContent = 'RM ' + total.toFixed(2);
+}
+
+function shareList(){
+  const text = 'Grocery list:\n' + groceryList.map(function(i){ return '- '+i.name+' (x'+i.qty+') ~RM '+parseFloat(i.price||0).toFixed(2); }).join('\n');
+  if(navigator.share){ navigator.share({title:'Grocery list', text:text}).catch(function(){}); }
+  else{
+    if(navigator.clipboard) navigator.clipboard.writeText(text);
+    alert('Sharing is not available here, so the list was copied to your clipboard instead.');
+  }
+}
+
+function exportToAI(){
+  const range = cycleRange(), start = range.start, end = range.end;
+  const totalDays = Math.round((end-start)/86400000)+1;
+  const dayToDaySpent = sumInRange(start, new Date(), ['daily','grocery']);
+  const recurringTotal = recurringTotalForCycle(totalDays, start, end);
+  const cardSpent = sumInRange(start, new Date(), null, 'card');
+  const byCategory = {};
+  transactions.filter(function(t){ return t.type==='daily' && t.date>=todayStr(start); }).forEach(function(t){
+    const amt = parseFloat(t.amount||0);
+    byCategory[t.category||'Other'] = (byCategory[t.category||'Other']||0) + amt;
+  });
+  let text = 'Budget export for cycle ' + todayStr(start) + ' to ' + todayStr(end) + '\n';
+  text += 'Starting amount: RM ' + parseFloat(settings.allocation||0).toFixed(2) + '\n';
+  text += 'Savings goal: RM ' + parseFloat(settings.savingsGoal||0).toFixed(2) + '\n\n';
+  text += 'Recurring bills total (incl. active installments): RM ' + recurringTotal.toFixed(2) + '\n';
+  recurring.forEach(function(r){ text += '  - ' + r.name + ': RM ' + parseFloat(r.amount||0).toFixed(2) + ' (' + r.frequency + ')\n'; });
+  text += 'Day-to-day spend (groceries + daily log): RM ' + dayToDaySpent.toFixed(2) + '\n';
+  text += 'By category: ' + Object.keys(byCategory).map(function(k){ return k+': RM '+byCategory[k].toFixed(2); }).join(', ') + '\n';
+  text += 'Credit card spend this cycle: RM ' + cardSpent.toFixed(2) + '\n\n';
+  text += 'Grocery purchases this cycle:\n';
+  transactions.filter(function(t){ return t.type==='grocery' && t.date>=todayStr(start); }).forEach(function(t){ text += '  - RM ' + parseFloat(t.amount||0).toFixed(2) + ' on ' + t.date + '\n'; });
+  text += '\nTrend message shown in-app: ' + document.getElementById('trendMsg').textContent + '\n';
+  text += '\nPlease analyze my spending habits based on this data.';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(text);
+    const tick = document.getElementById('copiedTick');
+    tick.style.display = 'inline';
+    clearTimeout(window._copiedTimer);
+    window._copiedTimer = setTimeout(function(){ tick.style.display = 'none'; }, 2000);
+  } else alert(text);
+}
+
+function renderAll(){
+  renderDashboard();
+  renderExpenseList();
+  renderRecurring();
+  renderUpcoming();
+  renderGrocery();
+}
+document.getElementById('expRangeFrom').addEventListener('change', renderExpenseList);
+document.getElementById('expRangeTo').addEventListener('change', renderExpenseList);
+
+initDb();
+</script>
+</body>
+</html>
